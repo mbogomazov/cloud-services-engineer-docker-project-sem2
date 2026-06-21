@@ -1,0 +1,20 @@
+# VCS / docs
+.git
+.gitignore
+.gitattributes
+*.md
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Tests & generated mocks are not needed in the production image.
+# NOTE: internal/store/dumplings/fake is imported at runtime — keep it.
+**/*_test.go
+**/mock/
+
+# Local build artifacts
+*.out
+*.test
+*.exe
+vendor/

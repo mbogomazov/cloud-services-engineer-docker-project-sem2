@@ -31,6 +31,24 @@ jobs:
             context: ./frontend/
             push: true
             tags: ${{ secrets.DOCKER_USER }}/docker-project-frontend:latest
+        - name: Scan backend image with Trivy
+          uses: aquasecurity/trivy-action@0.24.0
+          with:
+            image-ref: ${{ secrets.DOCKER_USER }}/docker-project-backend:latest
+            format: table
+            vuln-type: os,library
+            severity: CRITICAL,HIGH
+            ignore-unfixed: true
+            exit-code: "0"
+        - name: Scan frontend image with Trivy
+          uses: aquasecurity/trivy-action@0.24.0
+          with:
+            image-ref: ${{ secrets.DOCKER_USER }}/docker-project-frontend:latest
+            format: table
+            vuln-type: os,library
+            severity: CRITICAL,HIGH
+            ignore-unfixed: true
+            exit-code: "0"
 
   run-with-docker-compose:
     name: Push Docker image to DockerHub

@@ -2,7 +2,7 @@ module.exports = {
   devServer: {
     disableHostCheck: true,
   },
-  publicPath: process.env.NODE_ENV === 'production'
-    ? '/momo-store/'
-    : '/'
+  // Asset base path. Configurable via PUBLIC_PATH so the Docker image can be
+  // served at root ('/') behind the nginx reverse proxy.
+  publicPath: process.env.PUBLIC_PATH || '/'
 };

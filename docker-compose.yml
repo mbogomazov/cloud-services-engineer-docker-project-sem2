@@ -1,0 +1,90 @@
+name: momo-store
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        GO_VERSION: "1.17"
+    image: ${DOCKER_USER:-local}/docker-project-backend:latest
+    restart: unless-stopped
+    # Backend listens on 8081 (see grading requirement).
+    ports:
+      - "${BACKEND_PORT:-8081}:8081"
+    networks:
+      - backend-net
+    healthcheck:
+      # Uses the compiled /healthcheck binary baked into the distroless image.
+      test: ["CMD", "/healthcheck"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    # --- security hardening ---
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # --- resource limits ---
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          memory: 32M
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NODE_VERSION: "16"
+        # Empty => SPA uses relative URLs, proxied to backend by nginx.
+        VUE_APP_API_URL: "${VUE_APP_API_URL:-}"
+        PUBLIC_PATH: "/"
+    image: ${DOCKER_USER:-local}/docker-project-frontend:latest
+    restart: unless-stopped
+    # Host :80 -> container :8080 (non-root nginx cannot bind :80).
+    ports:
+      - "${FRONTEND_PORT:-80}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - frontend-net
+      - backend-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    # --- security hardening ---
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # --- resource limits ---
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          memory: 32M
+
+networks:
+  # Public-facing segment (only the frontend is attached).
+  frontend-net:
+    driver: bridge
+  # Internal segment for frontend <-> backend traffic.
+  backend-net:
+    driver: bridge

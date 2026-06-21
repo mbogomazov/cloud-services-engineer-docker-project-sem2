@@ -1,0 +1,12 @@
+# Overlay for horizontal scaling of the backend.
+#
+# The base compose publishes backend on a fixed host port (8081) which prevents
+# running multiple replicas. This overlay removes that fixed mapping so the
+# backend can be scaled; nginx in the frontend load-balances across replicas
+# via Docker's embedded DNS.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.scale.yml up -d --scale backend=3
+services:
+  backend:
+    ports: !override []
